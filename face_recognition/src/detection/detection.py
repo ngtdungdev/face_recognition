@@ -4,6 +4,7 @@ from tkinter import messagebox
 
 import cv2
 import numpy as np
+from PIL import Image, ImageTk
 from BLL.CustomerBLL import CustomerBLL
 from DTO.Customer import Customer
 
@@ -21,7 +22,8 @@ class Detection:
             self.models[customerID] = cv2.face.LBPHFaceRecognizer_create()
             self.models[customerID].read(os.path.join(self.training_dir, filename))
 
-    def detect(self):
+
+    def findByFace(self, cbbGender, cbbMembership, btDel, label1):
         cap = cv2.VideoCapture(0)
 
         while (True):
@@ -32,68 +34,18 @@ class Detection:
             for (x, y, w, h) in faces:
                 cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
                 roi_gray = gray[y:y+h, x:x+w]
-                self.customerID = ''
                 minimum = 100
                 confidences = []
+                self.customerID = ''
                 for model_id, model in self.models.items():
                     label, confidence = model.predict(roi_gray)
                     confidences.append(confidence)
                     if confidence < 50 and confidence < minimum:
                         self.customerID = model_id
+                        break
 
                 if self.customerID != '':
-                    self.customer = self.customerBLL.findCustomersBy({"CUSTOMER_ID": self.customerID})[0]
-                    print(self.customer)
-                    cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-                    cv2.putText(frame, self.customerID, (x, y+h+25), cv2.FONT_HERSHEY_SIMPLEX, 1, (36, 255, 12), 2)
-
-                    self.textfield[1].delete(0, END)
-                    self.textfield[1].insert(END, self.customer.getCustomerID())
-                    # name.configure(state="normal")
-                    # name.delete(0, END)
-                    # name.insert(END, self.customer.getName())
-                    # name.configure(state="disabled")
-            cv2.imshow('frame', frame)
-            if cv2.waitKey(1) == ord('q'):
-                if self.customerID == '':
-                    print ("Không nhận diện được khuôn mặt.")
-                    self.textfield[1].delete(0, END)
-                    # name.configure(state="normal")
-                    # name.delete(0, END)
-                    # name.configure(state="disabled")
-                    if messagebox.askyesno("Thông báo", "Không nhận diện được khách hàng.\nTạo khách hàng mới?"):
-                        self.customer = Customer(customerID=self.customerBLL.getAutoID())
-                        self.customerBLL.addCustomer(self.customer)
-                        self.textfield[1].insert(END, self.customer.getCustomerID())
-                        # name.configure(state="normal")
-                        # name.insert(END, self.customer.getName())
-                        # name.configure(state="disabled")
-                break
-        cap.release()
-        cv2.destroyAllWindows()
-        self.customerID = ''
-
-    def findByFace(self, cbbGender, cbbMembership):
-        cap = cv2.VideoCapture(0)
-
-        while (True):
-            ret, frame = cap.read()
-            frame = cv2.flip(frame, 1)
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            faces = self.face_cascade.detectMultiScale(gray, 1.3, 5)
-            for (x, y, w, h) in faces:
-                cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
-                roi_gray = gray[y:y+h, x:x+w]
-                self.customerID = ''
-                minimum = 100
-                confidences = []
-                for model_id, model in self.models.items():
-                    label, confidence = model.predict(roi_gray)
-                    confidences.append(confidence)
-                    if confidence < 50 and confidence < minimum:
-                        self.customerID = model_id
-
-                if self.customerID != '':
+                    print(self.customerID)
                     self.customer = self.customerBLL.findCustomersBy({"CUSTOMER_ID": self.customerID})[0]
                     values = self.customer.__str__().split(" | ")
                     print(self.customer)
@@ -124,12 +76,17 @@ class Detection:
                     self.textfield[4].delete(0, END)
                     self.textfield[4].insert(END, values[6])
 
+                    btDel.configure(state="normal")
+
+                    self.imgMode = ImageTk.PhotoImage(Image.open(fr'face_recognition\imgid\{self.customerID}.png').resize((180, 150), Image.ANTIALIAS))
+                    label1.configure(image=self.imgMode, anchor="center", width=180, height= 150)
+
+
             cv2.imshow('frame', frame)
             if cv2.waitKey(1) == ord('q'):
                 if self.customerID == '':
                     print ("Không nhận diện được khuôn mặt.")
-
-                    messagebox.showinfo("Thông báo", "Không nhận diện được khách hàng")
+                    # messagebox.showinfo("Thông báo", "Không nhận diện được khách hàng")
                 break
         cap.release()
         cv2.destroyAllWindows()

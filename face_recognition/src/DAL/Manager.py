@@ -89,5 +89,6 @@ class Manager(MySQL):
 
     def formatNumberToString(self, number: int, digits: int) -> str:
         n = str(number)
+
         count = digits - len(n)
         return "0"*count + n

@@ -37,7 +37,7 @@ class CustomerBLL(Manager[Customer]):
         self.__customerList[self.getIndex(customer, "CUSTOMER_ID", self.__customerList)] = customer
         return self.__customerDAL.updateCustomer(customer) != 0
 
-    def deleteCustomer(self, customer: Customer) -> bool:
+    def deleteCustomer(self, customer: str) -> bool:
         try:
             os.remove(fr'face_recognition\classifiers\{customer.getCustomerID()}.xml')
         except:
